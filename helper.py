@@ -41,59 +41,53 @@ def preprocess(article):
         new_article.append(" ".join(article[start:len(article)]))
     return new_article
 
-# def write_for_rouge(reference_sents, decoded_words, article, ex_index, dec_dir, ref_dir, all_dir):
-#     """Write output to file in correct format for eval with pyrouge. This is called in single_pass mode.
-#
-#     Args:
-#       reference_sents: list of strings
-#       decoded_words: list of strings
-#       ex_index: int, the index with which to label the files
-#     """
-#     # First, divide decoded output into sentences
-#     decoded_sents = []
-#     while len(decoded_words) > 0:
-#         try:
-#             fst_period_idx = decoded_words.index(".")
-#         except ValueError:  # there is text remaining that doesn't end in "."
-#             fst_period_idx = len(decoded_words)
-#         sent = decoded_words[:fst_period_idx + 1]  # sentence up to and including the period
-#         decoded_words = decoded_words[fst_period_idx + 1:]  # everything else
-#         decoded_sents.append(' '.join(sent))
-#
-#     # pyrouge calls a perl script that puts the data into HTML files.
-#     # Therefore we need to make our output HTML safe.
-#     decoded_sents = [make_html_safe(w) for w in decoded_sents]
-#     reference_sents = [make_html_safe(w) for w in reference_sents]
-#
-#     # Write to file
-#     if not os.path.exists(dec_dir):os.mkdir(dec_dir)
-#     #if not os.path.exists(ref_dir): os.mkdir(ref_dir)
-#     if not os.path.exists(all_dir): os.mkdir(all_dir)
-#     #ref_file = os.path.join(ref_dir, "%06d_reference.txt" % ex_index)
-#     decoded_file = os.path.join(dec_dir, "%06d_decoded.txt" % ex_index)
-#     all_file = os.path.join(all_dir, "%06d_decoded.txt" % ex_index)
-#     #with open(ref_file, "w") as f:
-#     #    for idx, sent in enumerate(reference_sents):
-#     #        f.write(sent) if idx == len(reference_sents) - 1 else f.write(sent + "\n")
-#     with open(decoded_file, "w") as f:
-#         for idx, sent in enumerate(decoded_sents):
-#             f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
-#     #with open(all_file, "w") as f:
-#     #    f.write('article : \n')
-#         #articles = preprocess(article)
-#         #for article in articles:
-#     #    f.write(article + '\n')
-#     #    f.write('\ndecode :\n')
-#     #    for idx, sent in enumerate(decoded_sents):
-#     #        f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
-#     #    f.write('\nref :\n')
-#     #    for idx, sent in enumerate(reference_sents):
-#     #        f.write(sent) if idx == len(reference_sents) - 1 else f.write(sent + "\n")
-#
-#     tf.logging.info("Wrote example %i to file" % ex_index)
+def write_for_rouge_beam(reference_sents, decoded_words, article, ex_index, dec_dir, ref_dir, all_dir):
+
+    # First, divide decoded output into sentences
+    decoded_sents = []
+    while len(decoded_words) > 0:
+        try:
+            fst_period_idx = decoded_words.index(".")
+        except ValueError:  # there is text remaining that doesn't end in "."
+            fst_period_idx = len(decoded_words)
+        sent = decoded_words[:fst_period_idx + 1]  # sentence up to and including the period
+        decoded_words = decoded_words[fst_period_idx + 1:]  # everything else
+        decoded_sents.append(' '.join(sent))
+
+    # pyrouge calls a perl script that puts the data into HTML files.
+    # Therefore we need to make our output HTML safe.
+    decoded_sents = [make_html_safe(w) for w in decoded_sents]
+    reference_sents = [make_html_safe(w) for w in reference_sents]
+
+    # Write to file
+    if not os.path.exists(dec_dir):os.mkdir(dec_dir)
+    #if not os.path.exists(ref_dir): os.mkdir(ref_dir)
+    if not os.path.exists(all_dir): os.mkdir(all_dir)
+    #ref_file = os.path.join(ref_dir, "%06d_reference.txt" % ex_index)
+    decoded_file = os.path.join(dec_dir, "%06d_decoded.txt" % ex_index)
+    all_file = os.path.join(all_dir, "%06d_decoded.txt" % ex_index)
+    #with open(ref_file, "w") as f:
+    #    for idx, sent in enumerate(reference_sents):
+    #        f.write(sent) if idx == len(reference_sents) - 1 else f.write(sent + "\n")
+    with open(decoded_file, "w") as f:
+        for idx, sent in enumerate(decoded_sents):
+            f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
+    with open(all_file, "w") as f:
+       f.write('article : \n')
+        #articles = preprocess(article)
+        #for article in articles:
+       f.write(article + '\n')
+       f.write('\ndecode :\n')
+       for idx, sent in enumerate(decoded_sents):
+           f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
+       f.write('\nref :\n')
+       for idx, sent in enumerate(reference_sents):
+           f.write(sent) if idx == len(reference_sents) - 1 else f.write(sent + "\n")
+
+    tf.logging.info("Wrote example %i to file" % ex_index)
 
 
-def write_for_rouge(reference_sents, decoded_words, article, ex_index, dec_dir, ref_dir, all_dir):
+def write_for_rouge_greedy(reference_sents, decoded_words, article, ex_index, dec_dir, ref_dir, all_dir):
     """Write output to file in correct format for eval with pyrouge. This is called in single_pass mode.
 
     Args:

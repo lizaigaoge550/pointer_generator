@@ -6,7 +6,7 @@ from data import Vocab
 from training import run_rl_training_gamma
 from batcher import Batcher
 from model import PointerNet
-from helper import get_config,write_for_rouge
+from helper import get_config,write_for_rouge_beam,write_for_rouge_greedy
 from helper import make_feed_dict,load_best_model
 import beam_search
 import data
@@ -66,6 +66,7 @@ tf.flags.DEFINE_string('restore_path', '', 'restore_path.')
 tf.flags.DEFINE_string('dec_path', '', 'dec_path.')
 tf.flags.DEFINE_string('ref_path', '', 'ref_path.')
 tf.flags.DEFINE_string('all_path', '', 'all_path.')
+tf.flags.DEFINE_boolean('beam', False , 'all_path.')
 tf.flags.DEFINE_string('restore_rl_path', '', 'restore_rl_path')
 # Pointer-generator with Self-Critic policy gradient: https://arxiv.org/pdf/1705.04304.pdf
 
@@ -222,7 +223,8 @@ def run_rl_training():
 
 def decode(test_path,rl):
     sess = tf.Session(config=get_config())
-    #FLAGS.batch_size = FLAGS.beam_size
+    if FLAGS.beam == True:
+        FLAGS.batch_size = FLAGS.beam_size
     FLAGS.max_dec_steps=1
     print('batch size ' , FLAGS.batch_size)
     if rl == False:
@@ -243,29 +245,40 @@ def decode(test_path,rl):
     batcher = Batcher(test_path, vocab, FLAGS, single_pass=FLAGS.single_pass, decode_after=FLAGS.decode_after)
     batches = batcher.fill_batch_queue(is_training=False)  # 1 example repeated across batch
     print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
-    for batch in batches:
-        print('startr')
-        article = batch.original_articles[0]
-        original_abstract_sents = batch.original_abstracts_sents # list of strings
-        #print('*****************start**************')
-        best_hyps = beam_search.run_beam_search(sess, summarizationModel, vocab, batch)
-        #print('best hyp : {0}'.format(best_hyp))
-        output_ids = [[int(t) for t in best_hyp.tokens[1:]] for best_hyp in best_hyps]
-        decoded_words = data.outputids2words(output_ids, vocab, (batch.art_oovs[0] if FLAGS.pointer_gen else None))
-        # try:
-        #     fst_stop_idx = decoded_words.index(data.STOP_DECODING)  # index of the (first) [STOP] symbol
-        #     decoded_words = decoded_words[:fst_stop_idx]
-        # except ValueError:
-        #     decoded_words = decoded_words
-        #print("decode_words : {0}".format(decoded_words))
-        #print('target_words : {0}'.format(original_abstract_sents))
-        decoded_words = remove_stop_index(decoded_words, data)
-        write_for_rouge(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
-        counter += FLAGS.batch_size  # this is how many examples we've decoded
-        print('counter ... ', counter)
-        if counter % (5*64) == 0:
-            print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
-
+    if FLAGS.beam == False:
+        for batch in batches:
+            article = batch.original_articles[0]
+            original_abstract_sents = batch.original_abstracts_sents # list of strings
+            #print('*****************start**************')
+            best_hyps = beam_search.run_greedy_search(sess, summarizationModel, vocab, batch)
+            output_ids = [[int(t) for t in best_hyp.tokens[1:]] for best_hyp in best_hyps]
+            decoded_words = data.outputids2words_greedy(output_ids, vocab, (batch.art_oovs[0] if FLAGS.pointer_gen else None))
+            decoded_words = remove_stop_index(decoded_words, data)
+            write_for_rouge_greedy(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
+            counter += FLAGS.batch_size  # this is how many examples we've decoded
+            print('counter ... ', counter)
+            if counter % (5*64) == 0:
+                print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
+    else:
+        for batch in batches:
+            article = batch.original_articles[0]
+            original_abstract_sents = batch.original_abstracts_sents[0] # list of strings
+            #print('*****************start**************')
+            best_hyps = beam_search.run_beam_search(sess, summarizationModel, vocab, batch)
+            #print('best hyp : {0}'.format(best_hyp))
+            output_ids = [int(t) for t in best_hyps.tokens[1:]]
+            decoded_words = data.outputids2words_beam(output_ids, vocab, (batch.art_oovs[0] if FLAGS.pointer_gen else None))
+            try:
+                fst_stop_idx = decoded_words.index(data.STOP_DECODING)  # index of the (first) [STOP] symbol
+                decoded_words = decoded_words[:fst_stop_idx]
+            except ValueError:
+                decoded_words = decoded_words
+            decoded_words = ' '.join(decoded_words)
+            write_for_rouge_beam(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
+            counter += FLAGS.batch_size  # this is how many examples we've decoded
+            print('counter ... ', counter)
+            if counter % (5*64) == 0:
+                print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
 
 
 

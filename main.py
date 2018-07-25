@@ -12,7 +12,7 @@ import beam_search
 import data
 from rl_model import RLNet
 from helper import reward_function
-from helper import reader_params
+from helper import reader_params,remove_stop_index
 import tqdm
 
 FLAGS = tf.flags.FLAGS
@@ -245,19 +245,20 @@ def decode(test_path,rl):
     print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
     for batch in batches:
         article = batch.original_articles[0]
-        original_abstract_sents = batch.original_abstracts_sents[0]  # list of strings
+        original_abstract_sents = batch.original_abstracts_sents # list of strings
         #print('*****************start**************')
         best_hyp = beam_search.run_beam_search(sess, summarizationModel, vocab, batch)
         #print('best hyp : {0}'.format(best_hyp))
         output_ids = [int(t) for t in best_hyp.tokens[1:]]
         decoded_words = data.outputids2words(output_ids, vocab, (batch.art_oovs[0] if FLAGS.pointer_gen else None))
-        try:
-            fst_stop_idx = decoded_words.index(data.STOP_DECODING)  # index of the (first) [STOP] symbol
-            decoded_words = decoded_words[:fst_stop_idx]
-        except ValueError:
-            decoded_words = decoded_words
+        # try:
+        #     fst_stop_idx = decoded_words.index(data.STOP_DECODING)  # index of the (first) [STOP] symbol
+        #     decoded_words = decoded_words[:fst_stop_idx]
+        # except ValueError:
+        #     decoded_words = decoded_words
         #print("decode_words : {0}".format(decoded_words))
         #print('target_words : {0}'.format(original_abstract_sents))
+        decoded_words = remove_stop_index(decoded_words, data)
         write_for_rouge(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
         counter += 1  # this is how many examples we've decoded
         print('counter ... ', counter)

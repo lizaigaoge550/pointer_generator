@@ -272,10 +272,10 @@ class Batcher(object):
             if(batch_num + 1) * self._hps.batch_size <= data_len:
                 end_index = (batch_num + 1) * self._hps.batch_size
                 yield Batch(self._example_queue[start_index:end_index], self._hps, self._vocab)
-    else:
-        for i in range(len(self._example_queue)):
-            b = [self._example_queue[i] for _ in range(self._hps.batch_size)]
-            yield Batch(b,self._hps,self._vocab)
+    # else:
+    #     for i in range(len(self._example_queue)):
+    #         b = [self._example_queue[i] for _ in range(self._hps.batch_size)]
+    #         yield Batch(b,self._hps,self._vocab)
   def text_generator(self, example_generator):
     text = []
     for e in example_generator:

@@ -89,8 +89,7 @@ class RLNet(object):
             assert len(
                 self.final_dists) == 1  # final_dists is a singleton list containing shape (batch_size, extended_vsize)
             final_dists = self.final_dists[0]
-            topk_probs, self._topk_ids = tf.nn.top_k(final_dists,
-                                                     hps.batch_size * 2)  # take the k largest probs. note batch_size=beam_size in decode mode
+            topk_probs, self._topk_ids = tf.nn.top_k(final_dists,1)  # take the k largest probs. note batch_size=beam_size in decode mode
             self._topk_log_probs = tf.log(topk_probs)
 
     def _add_encoder(self, emb_enc_inputs, seq_len):

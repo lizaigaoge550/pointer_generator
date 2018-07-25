@@ -79,7 +79,7 @@ class Hypothesis(object):
     return self.log_prob / len(self.tokens)
 
 
-def run_beam_search(sess, model, vocab, batch):
+def run_beam_search_apk(sess, model, vocab, batch):
     enc_states, dec_in_state = model.run_encoder(sess, batch)
     hyps = [Hypothesis(tokens=[vocab.word2id(data.START_DECODING)],
                      log_probs=[0.0],
@@ -156,3 +156,49 @@ def run_beam_search(sess, model, vocab, batch):
 def sort_hyps(hyps):
   """Return a list of Hypothesis objects, sorted by descending average log probability"""
   return sorted(hyps, key=lambda h: h.avg_log_prob, reverse=True)
+
+def run_beam_search(sess, model, vocab, batch):
+    enc_states, dec_in_state = model.run_encoder(sess, batch)
+    hyps = [Hypothesis(tokens=[vocab.word2id(data.START_DECODING)],
+                     log_probs=[0.0],
+                     state=dec_in_state,
+                     attn_dists=[],
+                     p_gens=[],
+                     coverage=np.zeros([batch.enc_batch.shape[1]]) # zero vector of length attention_length
+                     ) for _ in range(FLAGS.beam_size)]
+    steps = 0
+    if FLAGS.intradecoder:
+        decoder_outputs = [np.zeros((FLAGS.beam_size,
+                                     FLAGS.dec_hidden_dim))]  # using this to calculate the intradecoder attention during decoding, feeding zero in the beginning
+    else:
+        decoder_outputs = []
+    encoder_es = []
+    while steps < 100:
+        #print('*************current step : {0}***********'.format(steps))
+        latest_tokens = [h.latest_token for h in hyps] # latest token produced by each hypothesis
+        latest_tokens = [t if t in range(vocab.size()) else vocab.word2id(data.UNKNOWN_TOKEN) for t in latest_tokens] # change any in-article temporary OOV ids to [UNK] id, so that we can lookup word embeddings
+        states = [h.state for h in hyps] # list of current decoder states of the hypotheses
+        prev_coverage = [h.coverage for h in hyps] # list of coverage vectors (or None)
+
+        # Run one step of the decoder to get the new info
+        (topk_ids, topk_log_probs, new_states, attn_dists, final_dists, p_gens, new_coverage, decoder_output, encoder_e) = \
+            model.decode_onestep(sess=sess,
+                        batch=batch,
+                        latest_tokens=latest_tokens,
+                        enc_states=enc_states,
+                        dec_init_states=states,
+                        prev_coverage=prev_coverage,
+                        prev_decoder_outputs=decoder_outputs if ( FLAGS.intradecoder and FLAGS.mode == "decode") else tf.stack([], axis=0))
+        decoder_outputs.append(decoder_output)
+        encoder_es.append(encoder_e)
+
+        for i in range(FLAGS.batch_size):
+            new_state, attn_dist, p_gen, new_coverage_i = new_states[i], attn_dists[i], p_gens[i], new_coverage[i]
+            hyps[i] = hyps[i].extend(token=topk_ids[i, 0],
+                               log_prob=topk_log_probs[i, 0],
+                               state=new_state,
+                               attn_dist=attn_dist,
+                               p_gen=p_gen,
+                               coverage=new_coverage_i)
+        steps += 1
+    return hyps

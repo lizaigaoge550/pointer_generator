@@ -249,7 +249,7 @@ def decode(test_path,rl):
         #print('*****************start**************')
         best_hyp = beam_search.run_beam_search(sess, summarizationModel, vocab, batch)
         #print('best hyp : {0}'.format(best_hyp))
-        output_ids = [int(t) for t in best_hyp.tokens[1:]]
+        output_ids = [[int(t) for t in best_hyp.tokens[1:]] for best_hyp in best_hyps]
         decoded_words = data.outputids2words(output_ids, vocab, (batch.art_oovs[0] if FLAGS.pointer_gen else None))
         # try:
         #     fst_stop_idx = decoded_words.index(data.STOP_DECODING)  # index of the (first) [STOP] symbol

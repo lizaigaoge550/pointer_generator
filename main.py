@@ -222,7 +222,7 @@ def run_rl_training():
 
 def decode(test_path,rl):
     sess = tf.Session(config=get_config())
-    FLAGS.batch_size = FLAGS.beam_size
+    #FLAGS.batch_size = FLAGS.beam_size
     FLAGS.max_dec_steps=1
     print('batch size ' , FLAGS.batch_size)
     if rl == False:
@@ -260,7 +260,7 @@ def decode(test_path,rl):
         #print('target_words : {0}'.format(original_abstract_sents))
         decoded_words = remove_stop_index(decoded_words, data)
         write_for_rouge(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
-        counter += 1  # this is how many examples we've decoded
+        counter += FLAGS.batch_size  # this is how many examples we've decoded
         print('counter ... ', counter)
         if counter % 100 == 0:
             print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))

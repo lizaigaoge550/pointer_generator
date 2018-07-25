@@ -263,7 +263,7 @@ class Batcher(object):
         tf.logging.error('batcher: data len is 0')
         exit(1)
     data_len = len(self._example_queue)
-    if self._hps.mode != 'decode':
+    if self._hps.mode != '':
         num_batch_per_epoch = int(data_len/self._hps.batch_size) + 1
         if is_training:
             np.random.shuffle(self._example_queue)

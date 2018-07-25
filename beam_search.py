@@ -87,7 +87,7 @@ def run_beam_search_apk(sess, model, vocab, batch):
                      attn_dists=[],
                      p_gens=[],
                      coverage=np.zeros([batch.enc_batch.shape[1]]) # zero vector of length attention_length
-                     ) for _ in range(FLAGS.beam_size)]
+                     ) for _ in range(FLAGS.batch_size)]
     results = [] # this will contain finished hypotheses (those that have emitted the [STOP] token)
     #print("************hyps finished**************")
 
@@ -96,7 +96,7 @@ def run_beam_search_apk(sess, model, vocab, batch):
     if FLAGS.intradecoder:
         decoder_outputs = [np.zeros((FLAGS.beam_size,FLAGS.dec_hidden_dim))]
     encoder_es = []
-    while steps < 100 and len(results) < FLAGS.beam_size:
+    while steps < 100:
         #print('*************current step : {0}***********'.format(steps))
         latest_tokens = [h.latest_token for h in hyps] # latest token produced by each hypothesis
         latest_tokens = [t if t in range(vocab.size()) else vocab.word2id(data.UNKNOWN_TOKEN) for t in latest_tokens] # change any in-article temporary OOV ids to [UNK] id, so that we can lookup word embeddings
@@ -165,7 +165,7 @@ def run_beam_search(sess, model, vocab, batch):
                      attn_dists=[],
                      p_gens=[],
                      coverage=np.zeros([batch.enc_batch.shape[1]]) # zero vector of length attention_length
-                     ) for _ in range(FLAGS.beam_size)]
+                     ) for _ in range(FLAGS.batch_size)]
     steps = 0
     if FLAGS.intradecoder:
         decoder_outputs = [np.zeros((FLAGS.beam_size,

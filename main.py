@@ -244,10 +244,11 @@ def decode(test_path,rl):
     batches = batcher.fill_batch_queue(is_training=False)  # 1 example repeated across batch
     print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
     for batch in batches:
+        print('startr')
         article = batch.original_articles[0]
         original_abstract_sents = batch.original_abstracts_sents # list of strings
         #print('*****************start**************')
-        best_hyp = beam_search.run_beam_search(sess, summarizationModel, vocab, batch)
+        best_hyps = beam_search.run_beam_search(sess, summarizationModel, vocab, batch)
         #print('best hyp : {0}'.format(best_hyp))
         output_ids = [[int(t) for t in best_hyp.tokens[1:]] for best_hyp in best_hyps]
         decoded_words = data.outputids2words(output_ids, vocab, (batch.art_oovs[0] if FLAGS.pointer_gen else None))
@@ -262,7 +263,7 @@ def decode(test_path,rl):
         write_for_rouge(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
         counter += FLAGS.batch_size  # this is how many examples we've decoded
         print('counter ... ', counter)
-        if counter % 100 == 0:
+        if counter % (5*64) == 0:
             print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
 
 

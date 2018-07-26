@@ -19,7 +19,6 @@
 import tensorflow as tf
 import numpy as np
 import data
-from sklearn.preprocessing import normalize
 
 FLAGS = tf.flags.FLAGS
 
@@ -100,11 +99,8 @@ def run_beam_search(sess, model, vocab, batch, dqn = None, dqn_sess = None, dqn_
     decoder_outputs = [np.zeros((FLAGS.beam_size,FLAGS.dec_hidden_dim))] # using this to calculate the intradecoder attention during decoding, feeding zero in the beginning
   else:
     decoder_outputs = []
-  if FLAGS.use_temporal_attention:
-    encoder_es = [np.zeros((FLAGS.beam_size,batch.enc_batch.shape[1]))] # using this to calculate the attention during decoding, feeding zero in the beginning
-  else:
-    encoder_es = []
-  while steps < FLAGS.max_dec_steps and len(results) < FLAGS.beam_size:
+
+  while steps < 100 and len(results) < FLAGS.beam_size:
     latest_tokens = [h.latest_token for h in hyps] # latest token produced by each hypothesis
     latest_tokens = [t if t in range(vocab.size()) else vocab.word2id(data.UNKNOWN_TOKEN) for t in latest_tokens] # change any in-article temporary OOV ids to [UNK] id, so that we can lookup word embeddings
     states = [h.state for h in hyps] # list of current decoder states of the hypotheses
@@ -118,25 +114,8 @@ def run_beam_search(sess, model, vocab, batch, dqn = None, dqn_sess = None, dqn_
                         enc_states=enc_states,
                         dec_init_states=states,
                         prev_coverage=prev_coverage,
-                        prev_decoder_outputs= decoder_outputs if (FLAGS.intradecoder and FLAGS.mode=="decode") else tf.stack([], axis=0),
-                        prev_encoder_es = encoder_es if (FLAGS.use_temporal_attention and FLAGS.mode=="decode") else tf.stack([], axis=0))
+                        prev_decoder_outputs= decoder_outputs if (FLAGS.intradecoder and FLAGS.mode=="decode") else tf.stack([], axis=0))
     decoder_outputs.append(decoder_output)
-    encoder_es.append(encoder_e)
-
-    if FLAGS.ac_training:
-      with dqn_graph.as_default():
-        dqn_results = dqn.run_test_steps(dqn_sess, x=decoder_output)
-        q_estimates = dqn_results['estimates'] # shape (len(transitions), vocab_size)
-        # we use the q_estimate of UNK token for all the OOV tokens
-        q_estimates = np.concatenate([q_estimates,np.reshape(q_estimates[:,0],[-1,1])*np.ones((FLAGS.beam_size,batch.max_art_oovs))],axis=-1)
-        # normalized q_estimate
-        q_estimates = normalize(q_estimates, axis=1, norm='l1')
-        combined_estimates = final_dists * q_estimates
-        combined_estimates = normalize(combined_estimates, axis=1, norm='l1')
-        # overwriting topk ids and probs
-        topk_ids = np.argsort(combined_estimates,axis=-1)[:,-FLAGS.beam_size*2:][:,::-1]
-        topk_probs = [combined_estimates[i,_] for i,_ in enumerate(topk_ids)]
-        topk_log_probs = np.log(topk_probs)
 
     # Extend each hypothesis and collect them all in all_hyps
     all_hyps = []

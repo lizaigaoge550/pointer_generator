@@ -55,7 +55,7 @@ tf.flags.DEFINE_float('trunc_norm_init_std', 1e-4, 'std of trunc norm init, used
 tf.flags.DEFINE_float('max_grad_norm', 2.0, 'for gradient clipping')
 tf.flags.DEFINE_float('threshold', 0.00001, 'for gradient clipping')
 tf.flags.DEFINE_string('embedding', None, 'path to the pre-trained embedding file')
-tf.flags.DEFINE_string('gpu_num', '0', 'which gpu to use to train the model')
+tf.flags.DEFINE_string('gpu_num', '', 'which gpu to use to train the model')
 
 # Pointer-generator or baseline model
 tf.flags.DEFINE_boolean('pointer_gen', True, 'If True, use pointer-generator model. If False, use baseline model.')
@@ -273,11 +273,11 @@ def decode(test_path,rl):
                 decoded_words = decoded_words[:fst_stop_idx]
             except ValueError:
                 decoded_words = decoded_words
-            decoded_words = ' '.join(decoded_words)
+            #decoded_words = ' '.join(decoded_words)
             write_for_rouge_beam(original_abstract_sents, decoded_words, article, counter, FLAGS.dec_path, FLAGS.ref_path, FLAGS.all_path)  # write ref summary and decoded summary to file, to eval with pyrouge later
-            counter += FLAGS.batch_size  # this is how many examples we've decoded
+            counter += 1  # this is how many examples we've decoded
             print('counter ... ', counter)
-            if counter % (5*64) == 0:
+            if counter % 100 == 0:
                 print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
 
 

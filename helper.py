@@ -171,7 +171,7 @@ def reader_params(path):
 def load_best_model(dir):
     model_set = set()
     for f in glob.glob(os.path.join(dir,'*')):
-        f = f.split('/')[-1]
+        f = f.split('\\')[-1]
         if 'model' in f:
             f = f[:f.index('ckpt')-1]
             model_set.add(f)

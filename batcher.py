@@ -276,6 +276,23 @@ class Batcher(object):
         for i in range(len(self._example_queue)):
             b = [self._example_queue[i] for _ in range(self._hps.batch_size)]
             yield Batch(b,self._hps,self._vocab)
+
+  def cpu_fill_batch_queue(self):
+    if len(self._example_queue) == 0:
+        self.fill_example_queue()
+    print('****************data_len:{0}****************'.format(len(self._example_queue)))
+    if len(self._example_queue) == 0:
+        tf.logging.error('batcher: data len is 0')
+        exit(1)
+    l = []
+    for i in range(len(self._example_queue)):
+        b = [self._example_queue[i] for _ in range(self._hps.batch_size)]
+        l.append(Batch(b,self._hps,self._vocab))
+    return l
+
+
+
+
   def text_generator(self, example_generator):
     text = []
     for e in example_generator:

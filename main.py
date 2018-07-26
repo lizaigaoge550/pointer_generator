@@ -13,7 +13,7 @@ import data
 from rl_model import RLNet
 from helper import reward_function
 from helper import reader_params,remove_stop_index
-import tqdm
+from decode import thread_decode
 
 FLAGS = tf.flags.FLAGS
 
@@ -28,6 +28,7 @@ tf.flags.DEFINE_string('mode', 'train', 'must be one of train/eval/decode')
 tf.flags.DEFINE_boolean('single_pass', False, 'For decode mode only. If True, run eval on the full dataset using a fixed checkpoint, i.e. take the current checkpoint, and use it to produce one summary for each example in the dataset, write the summaries to file and then get ROUGE scores for the whole dataset. If False (default), run concurrent decoding, i.e. repeatedly load latest checkpoint, use it to produce summaries for randomly-chosen examples and log the results to screen, indefinitely.')
 tf.flags.DEFINE_integer('decode_after', 0, 'skip already decoded docs')
 tf.flags.DEFINE_integer('epoch', 10, 'epoch')
+tf.flags.DEFINE_integer('work_num', 30, 'work_num')
 tf.flags.DEFINE_integer('patient', 5, 'patient')
 tf.flags.DEFINE_integer('eval_step', 2000, 'eval_step')
 
@@ -292,6 +293,8 @@ if __name__ == '__main__':
     elif FLAGS.mode=='train' and FLAGS.rl==False:
         run_training()
     elif FLAGS.mode=='decode':
-        decode(FLAGS.data_path, FLAGS.rl)
+        #decode(FLAGS.data_path, FLAGS.rl)
+        #test_path,vocab, FLAGS
+        thread_decode(FLAGS.data_path,vocab,FLAGS)
     else:
         print('lalalala.......')

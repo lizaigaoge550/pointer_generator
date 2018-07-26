@@ -30,13 +30,20 @@ class PointerNet(object):
         print("coverage ... ", self._hps.coverage)
     def build_graph(self):
         tf.logging.info('Building graph...')
-        gpu_num = self._hps.gpu_num.split(',')
-        with tf.device('/gpu:{0}'.format(gpu_num[0])):
+        if self._hps.gpu_num == '':
             self._add_placeholders()
             self._add_seq2seq()
-            if self._hps.mode in ['train','eval']:
+            if self._hps.mode in ['train', 'eval']:
                 self._add_shared_loss_op()
                 self.loss_function()
+        else:
+            gpu_num = self._hps.gpu_num.split(',')
+            with tf.device('/gpu:{0}'.format(gpu_num[0])):
+                self._add_placeholders()
+                self._add_seq2seq()
+                if self._hps.mode in ['train', 'eval']:
+                    self._add_shared_loss_op()
+                    self.loss_function()
 
     def _add_placeholders(self):
         hps = self._hps
@@ -131,18 +138,34 @@ class PointerNet(object):
                                               state_is_tuple=True)
 
             if self._hps.encoder_attention:
-                if len(self._hps.gpu_num.split(',')) > 1:
-                    with tf.device('/gpu:{0}'.format(self._hps.gpu_num.split(",")[1])):
-                        W_forward = tf.get_variable(name="encoder_attn_w_forward", shape=[1,1,self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],initializer=self.trunc_norm_init)
-                        v_forward = tf.get_variable(name='encoder_attn_v_forward', shape=[self._hps.enc_hidden_dim], initializer=tf.zeros_initializer)
-                        W_backward = tf.get_variable(name="encoder_attn_w_backward", shape=[1, 1, self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],
-                                                initializer=self.trunc_norm_init)
-                        v_backward = tf.get_variable(name='encoder_attn_v_backward', shape=[self._hps.enc_hidden_dim],
-                                                initializer=tf.zeros_initializer)
-                        (encoder_outputs, (fw_st, bw_st)) = bi_lstm_attnetion(emb_enc_inputs, seq_len, cell_fw, cell_bw,W_forward,
-                                                                              v_forward,W_backward,v_backward,self._enc_padding_mask)
+                try:
+                    if len(self._hps.gpu_num.split(',')) > 1:
+                        with tf.device('/gpu:{0}'.format(self._hps.gpu_num.split(",")[1])):
+                            W_forward = tf.get_variable(name="encoder_attn_w_forward", shape=[1,1,self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],initializer=self.trunc_norm_init)
+                            v_forward = tf.get_variable(name='encoder_attn_v_forward', shape=[self._hps.enc_hidden_dim], initializer=tf.zeros_initializer)
+                            W_backward = tf.get_variable(name="encoder_attn_w_backward", shape=[1, 1, self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],
+                                                    initializer=self.trunc_norm_init)
+                            v_backward = tf.get_variable(name='encoder_attn_v_backward', shape=[self._hps.enc_hidden_dim],
+                                                    initializer=tf.zeros_initializer)
+                            (encoder_outputs, (fw_st, bw_st)) = bi_lstm_attnetion(emb_enc_inputs, seq_len, cell_fw, cell_bw,W_forward,
+                                                                                  v_forward,W_backward,v_backward,self._enc_padding_mask)
 
-                else:
+                    else:
+                        W_forward = tf.get_variable(name="encoder_attn_w_forward",
+                                                    shape=[1, 1, self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],
+                                                    initializer=self.trunc_norm_init)
+                        v_forward = tf.get_variable(name='encoder_attn_v_forward', shape=[self._hps.enc_hidden_dim],
+                                                    initializer=tf.zeros_initializer)
+                        W_backward = tf.get_variable(name="encoder_attn_w_backward",
+                                                     shape=[1, 1, self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],
+                                                     initializer=self.trunc_norm_init)
+                        v_backward = tf.get_variable(name='encoder_attn_v_backward', shape=[self._hps.enc_hidden_dim],
+                                                     initializer=tf.zeros_initializer)
+                        (encoder_outputs, (fw_st, bw_st)) = bi_lstm_attnetion(emb_enc_inputs, seq_len, cell_fw, cell_bw,
+                                                                              W_forward,
+                                                                              v_forward, W_backward, v_backward,
+                                                                              self._enc_padding_mask)
+                except:
                     W_forward = tf.get_variable(name="encoder_attn_w_forward",
                                                 shape=[1, 1, self._hps.enc_hidden_dim, self._hps.enc_hidden_dim],
                                                 initializer=self.trunc_norm_init)

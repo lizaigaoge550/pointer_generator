@@ -227,15 +227,15 @@ def decode(test_path,rl):
         FLAGS.batch_size = FLAGS.beam_size
     FLAGS.max_dec_steps=1
     print('batch size ' , FLAGS.batch_size)
-    if rl == False:
-        summarizationModel = PointerNet(FLAGS, vocab)
-    elif rl==True:
-        if FLAGS.gamma > 0:
-            import rl_model_gamma
-            summarizationModel = rl_model_gamma.RLNet(FLAGS, vocab)
-        else:
-            import rl_model
-            summarizationModel = rl_model.RLNet(FLAGS, vocab)
+    #if rl == False:
+    summarizationModel = PointerNet(FLAGS, vocab)
+    #elif rl==True:
+    #    if FLAGS.gamma > 0:
+    #        import rl_model_gamma
+    #        summarizationModel = rl_model_gamma.RLNet(FLAGS, vocab)
+    #    else:
+    #        import rl_model
+    #        summarizationModel = rl_model.RLNet(FLAGS, vocab)
     summarizationModel.build_graph()
     saver = tf.train.Saver()
     best_model=load_best_model(FLAGS.restore_path)

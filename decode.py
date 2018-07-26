@@ -39,14 +39,16 @@ def thread_decode(test_path,vocab, FLAGS):
     assert len(split_datas) == FLAGS.work_num
     work_threads = []
     for i in range(FLAGS.work_num):
-        job = lambda : do(split_datas[i], summarizationModel, vocab, sess, FLAGS, count_array[i])
+        job = lambda : do(split_datas[i], summarizationModel, vocab, sess, FLAGS, count_array[i],i)
         t = threading.Thread(target=job)
         t.start()
         work_threads.append(t)
+        print('work : {0}'.format(i))
     COORD.join(work_threads)
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-def do(batches, model, vocab, sess, FLAGS, counter):
+def do(batches, model, vocab, sess, FLAGS, counter,i):
+    print('work : {0}, len : {1}'.format(i, len(batches)))
     for batch in batches:
         article = batch.original_articles[0]
         original_abstract_sents = batch.original_abstracts_sents[0]  # list of strings

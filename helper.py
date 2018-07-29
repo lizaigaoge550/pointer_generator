@@ -60,18 +60,18 @@ def write_for_rouge_beam(reference_sents, decoded_words, article, ex_index, dec_
     reference_sents = [make_html_safe(w) for w in reference_sents]
 
     # Write to file
-    if not os.path.exists(dec_dir):os.mkdir(dec_dir)
-    if not os.path.exists(ref_dir): os.mkdir(ref_dir)
+    #if not os.path.exists(dec_dir):os.mkdir(dec_dir)
+    #if not os.path.exists(ref_dir): os.mkdir(ref_dir)
     if not os.path.exists(all_dir): os.mkdir(all_dir)
-    ref_file = os.path.join(ref_dir, "%06d_reference.txt" % ex_index)
-    decoded_file = os.path.join(dec_dir, "%06d_decoded.txt" % ex_index)
+    #ref_file = os.path.join(ref_dir, "%06d_reference.txt" % ex_index)
+    #decoded_file = os.path.join(dec_dir, "%06d_decoded.txt" % ex_index)
     all_file = os.path.join(all_dir, "%06d_decoded.txt" % ex_index)
-    with open(ref_file, "w") as f:
-        for idx, sent in enumerate(reference_sents):
-            f.write(sent) if idx == len(reference_sents) - 1 else f.write(sent + "\n")
-    with open(decoded_file, "w") as f:
-        for idx, sent in enumerate(decoded_sents):
-            f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
+    #with open(ref_file, "w") as f:
+    #    for idx, sent in enumerate(reference_sents):
+    #        f.write(sent) if idx == len(reference_sents) - 1 else f.write(sent + "\n")
+    #with open(decoded_file, "w") as f:
+    #    for idx, sent in enumerate(decoded_sents):
+    #        f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
     with open(all_file, "w") as f:
        f.write('article : \n')
         #articles = preprocess(article)

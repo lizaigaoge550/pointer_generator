@@ -14,6 +14,7 @@ from rl_model import RLNet
 from helper import reward_function
 from helper import reader_params,remove_stop_index
 from decode import thread_decode
+from eval import run_eval
 
 FLAGS = tf.flags.FLAGS
 
@@ -88,15 +89,8 @@ def loading_variable(src_params, dst_params):
         p_l.append(s_p.assign(dst_params[s_p.name.split(':')[0]]))
     return p_l
 
-def run_eval(model, batcher, sess):
-    print('eval start ......')
-    loss = 0
-    batches = batcher.fill_batch_queue(is_training=False)
-    for batch in batches:
-        feed_dict = make_feed_dict(model, batch)
-        eloss = sess.run(model.loss, feed_dict)
-        loss += eloss
-    return loss
+
+
 
 def run_rl_eval(model, batcher, sess, eta):
     loss = 0
@@ -120,7 +114,7 @@ def run_training():
     sess = tf.Session(config=get_config())
     sess.run(tf.global_variables_initializer())
 
-    eval_loss = float('inf')
+    eval_max_reward = -float('inf')
     saver = tf.train.Saver(max_to_keep=10)
     if FLAGS.restore_path:
         print('loading params...')
@@ -138,17 +132,17 @@ def run_training():
             loss, _ = sess.run([summarizationModel.loss, summarizationModel.train_op], feed_dict)
             print("epoch : {0}, step : {1}, loss : {2}".format(abs(epoch-FLAGS.epoch), step, loss))
             if step % FLAGS.eval_step == 0:
-                eval_ = run_eval(summarizationModel, val_batcher, sess)
-                if eval_ < eval_loss:
+                eval_reward = run_eval(summarizationModel, val_batcher, sess)
+                if eval_max_reward < eval_reward:
                     if not os.path.exists(FLAGS.checkpoint):os.mkdir(FLAGS.checkpoint)
-                    saver.save(sess, save_path=os.path.join(FLAGS.checkpoint,'model_{0}_{1}.ckpt'.format(step,eval_)))
-                    eval_loss = eval_
+                    saver.save(sess, save_path=os.path.join(FLAGS.checkpoint,'model_{0}_{1}.ckpt'.format(step,eval_reward)))
+                    eval_max_reward = eval_reward
                     patient = FLAGS.patient
-                print('eval loss : {0}'.format(eval_loss))
+                print('eval loss : {0}'.format(eval_reward))
                 if patient < 0:
                     break
 
-                if eval_ - eval_loss > FLAGS.threshold:
+                if eval_max_reward - eval_reward > FLAGS.threshold:
                     patient -= 1
 
 def run_rl_training():

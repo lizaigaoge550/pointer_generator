@@ -7,7 +7,7 @@ import os
 from helper import reward_function,loading_variable
 import numpy as np
 
-
+from eval import run_eval
 
 def run_rl_eval_gramma(model, batcher, sess, eta):
     loss = 0
@@ -47,7 +47,7 @@ def run_rl_training_gamma(FLAGS, vocab):
     epoch = FLAGS.epoch
     step = 0
     patient = FLAGS.patient
-    eval_loss = float('inf')
+    eval_max_reward = -float('inf')
     while epoch > 0:
         batches = batcher.fill_batch_queue()
         for batch in batches:
@@ -93,16 +93,17 @@ def run_rl_training_gamma(FLAGS, vocab):
                                                                                     np.mean(res['reward'],axis=0)[0]
                                                                                     ))
             if step % FLAGS.eval_step == 0:
-                eval_ = run_rl_eval_gramma(summarizationModel, val_batcher, sess, 0.5)
-                if eval_ < eval_loss:
+                #eval_ = run_rl_eval_gramma(summarizationModel, val_batcher, sess, 0.5)
+                eval_reward = run_eval(summarizationModel, val_batcher, sess)
+                if eval_reward > eval_max_reward:
                     if not os.path.exists(FLAGS.checkpoint): os.mkdir(FLAGS.checkpoint)
-                    saver.save(sess, save_path=os.path.join(FLAGS.checkpoint, 'model_{0}_{1}.ckpt'.format(step, eval_)))
-                    eval_loss = eval_
+                    saver.save(sess, save_path=os.path.join(FLAGS.checkpoint, 'model_{0}_{1}.ckpt'.format(step, eval_reward)))
+                    eval_reward = eval_max_reward
                     patient = FLAGS.patient
-                print('eval loss ', eval_loss)
+                print('eval loss ', eval_max_reward)
                 if patient < 0:
                     break
 
-                if eval_ - eval_loss > FLAGS.threshold:
+                if eval_max_reward - eval_reward > FLAGS.threshold:
                     patient -= 1
 

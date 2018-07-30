@@ -35,7 +35,7 @@ def run_rl_training_gamma(FLAGS, vocab):
     val_batcher = Batcher(FLAGS.val_data_path, vocab, FLAGS, single_pass=FLAGS.single_pass,
                           decode_after=FLAGS.decode_after)
     sess = tf.Session(config=get_config())
-    saver = tf.train.Saver(max_to_keep=100)
+    saver = tf.train.Saver(max_to_keep=10)
     if FLAGS.restore_rl_path:
         print('restore rl model...')
         saver.restore(sess, FLAGS.restore_rl_path)
@@ -95,12 +95,13 @@ def run_rl_training_gamma(FLAGS, vocab):
             if step % FLAGS.eval_step == 0:
                 #eval_ = run_rl_eval_gramma(summarizationModel, val_batcher, sess, 0.5)
                 eval_reward = run_eval(summarizationModel, val_batcher, sess)
+                print('eval reward  ', eval_reward)
                 if eval_reward > eval_max_reward:
                     if not os.path.exists(FLAGS.checkpoint): os.mkdir(FLAGS.checkpoint)
                     saver.save(sess, save_path=os.path.join(FLAGS.checkpoint, 'model_{0}_{1}.ckpt'.format(step, eval_reward)))
-                    eval_reward = eval_max_reward
+                    eval_max_reward = eval__reward
                     patient = FLAGS.patient
-                print('eval loss ', eval_max_reward)
+                print('eval max ward ', eval_max_reward)
                 if patient < 0:
                     break
 

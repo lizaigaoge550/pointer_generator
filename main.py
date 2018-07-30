@@ -133,12 +133,13 @@ def run_training():
             print("epoch : {0}, step : {1}, loss : {2}".format(abs(epoch-FLAGS.epoch), step, loss))
             if step % FLAGS.eval_step == 0:
                 eval_reward = run_eval(summarizationModel, val_batcher, sess)
+                print('eval reward ',eval_reward)
                 if eval_max_reward < eval_reward:
                     if not os.path.exists(FLAGS.checkpoint):os.mkdir(FLAGS.checkpoint)
                     saver.save(sess, save_path=os.path.join(FLAGS.checkpoint,'model_{0}_{1}.ckpt'.format(step,eval_reward)))
                     eval_max_reward = eval_reward
                     patient = FLAGS.patient
-                print('eval loss : {0}'.format(eval_reward))
+                print('eval max reward : {0}'.format(eval_max_reward))
                 if patient < 0:
                     break
 
@@ -283,6 +284,7 @@ if __name__ == '__main__':
         print('import model_v2')
     if FLAGS.mode=='train' and FLAGS.rl==True:
         #run_rl_training()
+        print('rl gamma......')
         run_rl_training_gamma(FLAGS, vocab)
     elif FLAGS.mode=='train' and FLAGS.rl==False:
         run_training()

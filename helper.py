@@ -115,29 +115,29 @@ def write_for_rouge_greedy(reference_sents, decoded_words, article, ex_index, de
         reference_sent = [make_html_safe(w) for w in reference_sent]
 
         # Write to file
-        if not os.path.exists(dec_dir):os.mkdir(dec_dir)
-        if not os.path.exists(ref_dir): os.mkdir(ref_dir)
-        #if not os.path.exists(ref_dir): os.mkdir(all_dir)
-        ref_file = os.path.join(ref_dir, "%06d_reference.txt" % (ex_index+i))
-        decoded_file = os.path.join(dec_dir, "%06d_decoded.txt" % (ex_index+i))
-        #all_file = os.path.join(all_dir, "%06d_decoded.txt" % (ex_index+i))
-        with open(ref_file, "w") as f:
-            for idx, sent in enumerate(reference_sent):
-                f.write(sent) if idx == len(reference_sent) - 1 else f.write(sent + "\n")
-        with open(decoded_file, "w") as f:
-            for idx, sent in enumerate(decoded_sent):
-                f.write(sent) if idx == len(decoded_sent) - 1 else f.write(sent + "\n")
-        # with open(all_file, "w") as f:
-        #     f.write('article : \n')
-        #     articles = preprocess(article)
-        #     for article in articles:
-        #         f.write(article + '\n')
-        #     f.write('\ndecode :\n')
-        #     for idx, sent in enumerate(decoded_sent):
-        #         f.write(sent) if idx == len(decoded_sent) - 1 else f.write(sent + "\n")
-        #     f.write('\nref :\n')
-        #     for idx, sent in enumerate(reference_sent):
-        #         f.write(sent) if idx == len(reference_sent) - 1 else f.write(sent + "\n")
+        #if not os.path.exists(dec_dir):os.mkdir(dec_dir)
+        #if not os.path.exists(ref_dir): os.mkdir(ref_dir)
+        if not os.path.exists(all_dir): os.mkdir(all_dir)
+        #ref_file = os.path.join(ref_dir, "%06d_reference.txt" % (ex_index+i))
+        #decoded_file = os.path.join(dec_dir, "%06d_decoded.txt" % (ex_index+i))
+        all_file = os.path.join(all_dir, "%06d_decoded.txt" % (ex_index+i))
+        #with open(ref_file, "w") as f:
+        #    for idx, sent in enumerate(reference_sent):
+        #        f.write(sent) if idx == len(reference_sent) - 1 else f.write(sent + "\n")
+        #with open(decoded_file, "w") as f:
+        #    for idx, sent in enumerate(decoded_sent):
+        #        f.write(sent) if idx == len(decoded_sent) - 1 else f.write(sent + "\n")
+        with open(all_file, "w") as f:
+             f.write('article : \n')
+             articles = preprocess(article)
+             for article in articles:
+                 f.write(article + '\n')
+             f.write('\ndecode :\n')
+             for idx, sent in enumerate(decoded_sent):
+                 f.write(sent) if idx == len(decoded_sent) - 1 else f.write(sent + "\n")
+             f.write('\nref :\n')
+             for idx, sent in enumerate(reference_sent):
+                 f.write(sent) if idx == len(reference_sent) - 1 else f.write(sent + "\n")
 
     tf.logging.info("Wrote example %i to file" % ex_index)
 

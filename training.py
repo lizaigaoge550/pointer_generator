@@ -85,7 +85,7 @@ def run_rl_training_gamma(FLAGS, vocab):
 
             
             feed_dict[summarizationModel._reward] = Rs
-            feed_dict[summarizationModel._eta] = 0.5
+            feed_dict[summarizationModel._eta] = 0.1
             res = sess.run(to_return, feed_dict)
 
             print('step : {0}, pgen_loss : {1}, rl_loss : {2}, loss : {3}, reward : {4}'.format(step,res['pgen_loss'], res['rl_loss'],
@@ -99,7 +99,7 @@ def run_rl_training_gamma(FLAGS, vocab):
                 if eval_reward > eval_max_reward:
                     if not os.path.exists(FLAGS.checkpoint): os.mkdir(FLAGS.checkpoint)
                     saver.save(sess, save_path=os.path.join(FLAGS.checkpoint, 'model_{0}_{1}.ckpt'.format(step, eval_reward)))
-                    eval_max_reward = eval__reward
+                    eval_max_reward = eval_reward
                     patient = FLAGS.patient
                 print('eval max ward ', eval_max_reward)
                 if patient < 0:
